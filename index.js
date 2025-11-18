@@ -46,13 +46,42 @@ app.get("/api/dbstatus", (req, res) => {
   };
   res.json({ state, status: states[state] || "unknown" });
 });
-// MongoDB connection
-mongoose
-  .connect(process.env.MONGO_URI, {
-    dbName: process.env.MONGO_DB_NAME || "userData",
-  })
-  .then(() => console.log("MongoDB Atlas Connected"))
-  .catch((err) => console.log("DB Error:", err));
+
+// MongoDB connection with caching for serverless
+let isConnected = false;
+
+const connectDB = async () => {
+  if (isConnected) {
+    console.log("Using existing MongoDB connection");
+    return;
+  }
+
+  try {
+    const db = await mongoose.connect(process.env.MONGO_URI, {
+      dbName: process.env.MONGO_DB_NAME || "userData",
+    });
+    isConnected = db.connections[0].readyState === 1;
+    console.log("MongoDB Atlas Connected");
+  } catch (err) {
+    console.log("DB Error:", err);
+    throw err;
+  }
+};
+
+// Connect to DB
+connectDB();
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error("Global error handler:", err);
+  res.status(500).json({
+    message: "Internal server error",
+    error:
+      process.env.NODE_ENV === "production"
+        ? "Something went wrong"
+        : err.message,
+  });
+});
 
 // ----------------------------------------
 // LOCAL DEVELOPMENT ONLY
