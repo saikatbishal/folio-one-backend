@@ -12,7 +12,7 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "http://localhost:5713",
+      "http://localhost:5173",
       "https://folio-one-saikatbishals-projects.vercel.app",
       "https://folio-one-git-master-saikatbishals-projects.vercel.app",
       "https://folio-oqpsdkssg-saikatbishals-projects.vercel.app",

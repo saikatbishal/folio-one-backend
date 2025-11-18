@@ -3,7 +3,6 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const generateToken = require('../utils/generateTokens');
-
 // Register
 router.post('/register', async (req, res) => {
   const { username, name, email, password, usertype = 'user' } = req.body;
@@ -34,7 +33,6 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
-
   if (user && (await bcrypt.compare(password, user.password))) {
     res.cookie('jwt', generateToken(user._id), {
       httpOnly: true,
