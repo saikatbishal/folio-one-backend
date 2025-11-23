@@ -44,6 +44,50 @@ app.options("*", cors());
 app.use(express.json());
 app.use(cookieParser());
 
+// MongoDB connection with caching for serverless
+let isConnected = false;
+
+const connectDB = async () => {
+  if (isConnected && mongoose.connection.readyState === 1) {
+    console.log("Using existing MongoDB connection");
+    return;
+  }
+
+  try {
+    if (!process.env.MONGO_URI) {
+      throw new Error("MONGO_URI environment variable is not set");
+    }
+
+    const db = await mongoose.connect(process.env.MONGO_URI, {
+      dbName: process.env.MONGO_DB_NAME || "userData",
+      serverSelectionTimeoutMS: 5000,
+    });
+    isConnected = db.connections[0].readyState === 1;
+    console.log("MongoDB Atlas Connected");
+  } catch (err) {
+    console.log("DB Error:", err);
+    isConnected = false;
+    throw err;
+  }
+};
+
+// Middleware to ensure DB connection before handling requests
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error("Database connection failed:", error);
+    res.status(503).json({
+      message: "Database connection failed",
+      error:
+        process.env.NODE_ENV === "production"
+          ? "Service unavailable"
+          : error.message,
+    });
+  }
+});
+
 // Routes
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/users", require("./routes/users"));
@@ -64,30 +108,6 @@ app.get("/api/dbstatus", (req, res) => {
   };
   res.json({ state, status: states[state] || "unknown" });
 });
-
-// MongoDB connection with caching for serverless
-let isConnected = false;
-
-const connectDB = async () => {
-  if (isConnected) {
-    console.log("Using existing MongoDB connection");
-    return;
-  }
-
-  try {
-    const db = await mongoose.connect(process.env.MONGO_URI, {
-      dbName: process.env.MONGO_DB_NAME || "userData",
-    });
-    isConnected = db.connections[0].readyState === 1;
-    console.log("MongoDB Atlas Connected");
-  } catch (err) {
-    console.log("DB Error:", err);
-    throw err;
-  }
-};
-
-// Connect to DB
-connectDB();
 
 // Global error handler
 app.use((err, req, res, next) => {
