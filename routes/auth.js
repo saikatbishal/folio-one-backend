@@ -3,9 +3,9 @@ const router = express.Router();
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const generateToken = require("../utils/generateTokens");
-const connectDB = require("../utils/dbConnect"); 
+const connectDB = require("../utils/dbConnect");
 
-// Register
+// Register - returns JWT in response body (no cookies)
 router.post("/register", async (req, res) => {
   try {
     await connectDB();
@@ -28,68 +28,63 @@ router.post("/register", async (req, res) => {
     });
 
     if (user) {
+      const token = generateToken(user._id);
       res.status(201).json({
         _id: user._id,
         username: user.username,
         usertype: user.usertype,
-        token: generateToken(user._id),
+        token,
       });
     } else {
       res.status(400).json({ message: "Invalid user data" });
     }
   } catch (error) {
     console.error("Register error:", error);
-    res
-      .status(500)
-      .json({
-        message: "Server error during registration",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Server error during registration",
+      error: error.message,
+    });
   }
 });
 
-// Login
+// Login - returns JWT in response body (no cookies)
 router.post("/login", async (req, res) => {
   try {
-    // 1. ESTABLISH CONNECTION FIRST
     await connectDB();
 
     const { email, password } = req.body;
-    
-    // Now this query will wait for the connection above to complete
+
     const user = await User.findOne({ email });
-    const isProd = process.env.NODE_ENV === "production";
 
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
-    if (user && (await bcrypt.compare(password, user.password))) {
-      res.cookie("jwt", generateToken(user._id), {
-        httpOnly: true,
-        secure: isProd,
-        sameSite: isProd ? "none" : "lax",
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      });
 
-      res.json({
-        _id: user._id,
-        username: user.username,
-        usertype: user.usertype,
-      });
-    } else {
-      res.status(401).json({ message: "Invalid email or password" });
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+    if (!passwordMatch) {
+      return res.status(401).json({ message: "Invalid email or password" });
     }
+
+    const token = generateToken(user._id);
+
+    res.json({
+      _id: user._id,
+      username: user.username,
+      usertype: user.usertype,
+      token,
+    });
   } catch (error) {
     console.error("Login error:", error);
-    res
-      .status(500)
-      .json({ message: "Server error during login", error: error.message });
+    res.status(500).json({
+      message: "Server error during login",
+      error: error.message,
+    });
   }
 });
 
-// Logout
+// Logout - client just discards token; no server cookie to clear
 router.post("/logout", (req, res) => {
-  res.cookie("jwt", "", { httpOnly: true, expires: new Date(0) });
   res.json({ message: "Logged out" });
 });
 
