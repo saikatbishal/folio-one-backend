@@ -8,24 +8,30 @@ dotenv.config();
 
 const app = express();
 
-// CORS config
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:4173",
-      "https://folio-one-brown.vercel.app",
-      "https://folio-qp1qaihop-saikatbishals-projects.vercel.app",
-      "https://folio-one-saikatbishals-projects.vercel.app",
-      "https://folio-one-git-master-saikatbishals-projects.vercel.app",
-      "https://folio-oqpsdkssg-saikatbishals-projects.vercel.app",
-    ],
-    credentials: true,
-  })
-);
+// Standardize CORS origins in one place
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:4173",
+  "https://folio-one-brown.vercel.app",
+  "https://folio-qp1qaihop-saikatbishals-projects.vercel.app",
+  "https://folio-one-saikatbishals-projects.vercel.app",
+  "https://folio-one-git-master-saikatbishals-projects.vercel.app",
+  "https://folio-oqpsdkssg-saikatbishals-projects.vercel.app",
+];
+
+// CORS configuration object
+const corsOptions = {
+  origin: allowedOrigins,
+  credentials: true,
+};
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Handle preflight requests with the same CORS config
+app.options("*", cors(corsOptions));
 
 app.use(express.json());
-
 app.use(cookieParser());
 
 // Routes
@@ -53,23 +59,8 @@ app.get("/api/dbstatus", (req, res) => {
   res.json({ state, status: states[state] || "unknown" });
 });
 
-// MongoDB connection
-
-mongoose
-  .connect(process.env.MONGO_URI, {
-    dbName: process.env.MONGO_DB_NAME || "userData",
-  })
-  .then(() => console.log("MongoDB Atlas Connected"))
-
-  .catch((err) => console.log("DB Error:", err));
-
-// ----------------------------------------
-
-// LOCAL DEVELOPMENT ONLY
-
-// Run server locally (not on Vercel)
-
-// ----------------------------------------
+// MongoDB connection is handled in routes via connectDB() utility
+// Removed global mongoose.connect() to prevent buffering timeout in serverless
 
 if (process.env.NODE_ENV !== "production") {
   const PORT = 3000;
