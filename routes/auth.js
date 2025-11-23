@@ -3,9 +3,13 @@ const router = express.Router();
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const generateToken = require("../utils/generateTokens");
+const connectDB = require("../utils/dbConnect"); 
+
 // Register
 router.post("/register", async (req, res) => {
   try {
+    await connectDB();
+
     const { username, name, email, password, usertype = "user" } = req.body;
 
     const userExists = await User.findOne({ $or: [{ email }, { username }] });
@@ -47,8 +51,14 @@ router.post("/register", async (req, res) => {
 // Login
 router.post("/login", async (req, res) => {
   try {
+    // 1. ESTABLISH CONNECTION FIRST
+    await connectDB();
+
     const { email, password } = req.body;
+    
+    // Now this query will wait for the connection above to complete
     const user = await User.findOne({ email });
+
     if (user && (await bcrypt.compare(password, user.password))) {
       res.cookie("jwt", generateToken(user._id), {
         httpOnly: true,
