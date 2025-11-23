@@ -58,12 +58,16 @@ router.post("/login", async (req, res) => {
     
     // Now this query will wait for the connection above to complete
     const user = await User.findOne({ email });
+    const isProd = process.env.NODE_ENV === "production";
 
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
     if (user && (await bcrypt.compare(password, user.password))) {
       res.cookie("jwt", generateToken(user._id), {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: isProd,
+        sameSite: isProd ? "strict" : "lax",
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       });
 
