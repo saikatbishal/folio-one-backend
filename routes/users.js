@@ -2,10 +2,12 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
 const { protect, admin } = require("../middleware/auth");
+const connectDB = require("../utils/dbConnect");
 
 // Get my profile (logged-in user)
 router.get("/me", protect, async (req, res) => {
   try {
+    await connectDB();
     res.json(req.user);
   } catch (error) {
     console.error("Get profile error:", error);
@@ -16,6 +18,7 @@ router.get("/me", protect, async (req, res) => {
 // Get all users (admin only)
 router.get("/", protect, admin, async (req, res) => {
   try {
+    await connectDB();
     const users = await User.find().select("-password");
     res.json(users);
   } catch (error) {
@@ -27,6 +30,7 @@ router.get("/", protect, admin, async (req, res) => {
 // Delete user (admin only)
 router.delete("/:id", protect, admin, async (req, res) => {
   try {
+    await connectDB();
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
     if (user.usertype === "admin")

@@ -1,10 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const Founder = require("../models/Founder");
+const connectDB = require("../utils/dbConnect");
 
 // Get all founders (public)
 router.get("/", async (req, res) => {
   try {
+    await connectDB();
     const founders = await Founder.find();
     res.json(founders);
   } catch (error) {
@@ -16,6 +18,7 @@ router.get("/", async (req, res) => {
 // Add founder (you can protect this later)
 router.post("/", async (req, res) => {
   try {
+    await connectDB();
     const founder = new Founder(req.body);
     await founder.save();
     res.status(201).json(founder);
