@@ -14,7 +14,8 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://localhost:4173",
-      "https://folio-one-brown.vercel.app/",
+      "https://folio-one-brown.vercel.app",
+      "https://folio-qp1qaihop-saikatbishals-projects.vercel.app",
       "https://folio-one-saikatbishals-projects.vercel.app",
       "https://folio-one-git-master-saikatbishals-projects.vercel.app",
       "https://folio-oqpsdkssg-saikatbishals-projects.vercel.app",
