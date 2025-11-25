@@ -3,10 +3,14 @@ const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const corsHandler = require("./middleware/corsHandler");
 
 dotenv.config();
 
 const app = express();
+
+// Custom CORS middleware to handle OPTIONS requests
+app.use(corsHandler);
 
 // CORS config
 app.use(
