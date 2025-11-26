@@ -13,8 +13,9 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "http://localhost:4173",
+      "https://localhost:5173/login",
       "https://folio-one-brown.vercel.app/",
+      "https://folio-one-brown.vercel.app/login",
       "https://folio-qp1qaihop-saikatbishals-projects.vercel.app",
       "https://folio-one-saikatbishals-projects.vercel.app",
       "https://folio-one-git-master-saikatbishals-projects.vercel.app",
